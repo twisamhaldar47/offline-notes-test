@@ -1,3 +1,4 @@
+import Note from '../../models/Note';
 
 export default async function handler(req, res) {
   if (req.method === 'DELETE') {
@@ -14,13 +15,22 @@ export default async function handler(req, res) {
       // - Handle the case where the note is not found.
       // - Replace the example response below.
 
-      const noteFound = true; // Placeholder
+      const note = await Note.findByPk(id);
 
-      if (noteFound) {
-        res.status(200).json({ message: 'Note deleted successfully' });
-      } else {
-        res.status(404).json({ error: 'Note not found' });
+      if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
       }
+
+      // Delete the note
+      await note.destroy();
+      res.status(200).json({ message: 'Note deleted successfully' });
+      // const noteFound = true; // Placeholder
+      //
+      // if (noteFound) {
+      //   res.status(200).json({ message: 'Note deleted successfully' });
+      // } else {
+      //   res.status(404).json({ error: 'Note not found' });
+      // }
     } catch (error) {
       console.error('Error deleting note:', error);
       res.status(500).json({ error: 'Failed to delete note' });

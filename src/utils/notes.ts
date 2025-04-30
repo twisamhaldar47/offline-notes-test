@@ -61,6 +61,10 @@ export async function submitNote(note: Note) {
           // note._id = data.insertedId;
           // await editOfflineNote(note);
         // });
+        await response.json().then(async (data) => {
+          note._id = data.insertedId;
+          await editOfflineNote(note);
+        });
       } else {
         console.error('Failed to submit note');
       }
@@ -200,6 +204,10 @@ export async function refreshNotes() {
                 // localNote._id = data.insertedId;
                 // await editOfflineNote(localNote);
               // });
+              await submittedNoteResponse.json().then(async (data) => {
+                localNote._id = data.insertedId;
+                await editOfflineNote(localNote);
+              });
             } else {
                console.error(`Failed to sync local note ${localNote.localId} during refresh:`, submittedNoteResponse.statusText);
             }
