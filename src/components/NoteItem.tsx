@@ -160,7 +160,7 @@ const NoteItem: React.FC<NoteItemProps> = ({ note, onDeleteNote, onEditNote }) =
     setIsEditing(false);
   };
 
-  // Format the date to a more readable format
+
   const formattedDate = new Date(note.createdAt).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',

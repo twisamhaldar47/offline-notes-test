@@ -78,18 +78,18 @@ export default function NoteList() {
     const [loading, setLoading] = useState(false);
     const { selectedTags } = useTagContext();
 
-    // Filter notes based on selected tags
+
     const filteredNotes = useMemo(() => {
         if (selectedTags.length === 0) {
-            return allNotes; // No filter applied
+            return allNotes;
         }
 
         return allNotes.filter(note => {
             if (!note.tags || note.tags.length === 0) {
-                return false; // Note has no tags
+                return false;
             }
 
-            // Check if the note has at least one of the selected tags
+
             return selectedTags.some(tag => note.tags?.includes(tag));
         });
     }, [allNotes, selectedTags]);
@@ -174,10 +174,10 @@ export default function NoteList() {
             <NoteListWrapper>
                 <NoteForm onNoteSubmit={handleNoteSubmit} />
 
-                {/* Tag Filter Dropdown */}
+
                 <TagFilter notes={allNotes} />
 
-                {/* Filter information message */}
+
                 {selectedTags.length > 0 && (
                     <FilterInfo>
                         <FilterCount>{filteredNotes.length}</FilterCount> {filteredNotes.length === 1 ? 'note' : 'notes'} found matching the selected {selectedTags.length === 1 ? 'tag' : 'tags'}
