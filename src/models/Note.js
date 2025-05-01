@@ -1,6 +1,6 @@
-// src/models/Note.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database';
+import logger from '../utils/logger';
 
 const Note = sequelize.define('Note', {
     id: {
@@ -20,20 +20,26 @@ const Note = sequelize.define('Note', {
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false
+    },
+    tags: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: []
     }
 }, {
     timestamps: true, // This adds updatedAt field automatically
     updatedAt: true,  // Include updatedAt field
-    createdAt: false  // Don't add a second createdAt field
+    createdAt: false, // Don't add a second createdAt field
+    logging: (msg) => logger.db(msg)
 });
 
 // Initialize the model (creates the table if it doesn't exist)
 export const initializeModel = async () => {
     try {
         await Note.sync();
-        console.log('Note model synchronized successfully');
+        logger.success('Note model synchronized successfully');
     } catch (error) {
-        console.error('Failed to synchronize Note model:', error);
+        logger.error('Failed to synchronize Note model:', error);
     }
 };
 

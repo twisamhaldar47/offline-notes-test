@@ -1,32 +1,28 @@
-// src/config/database.js
 import { Sequelize } from 'sequelize';
+import logger from '../utils/logger';
 
-// Database connection configuration with hardcoded values
-const sequelize = new Sequelize(
-    'notes', // database name
-    'postgres',      // username
-    '56ajkb67t6uyv%&%$#',      // password
-    {
-        host: '82.180.144.162',
-        port: 5432,
-        dialect: 'postgres',
-        logging: console.log,
-        dialectOptions: {
-            ssl: false
-        }
-    }
-);
 
-// Test connection function
-export const testConnection = async () => {
+const sequelize = new Sequelize({
+    database: 'notes',
+    username: 'postgres',
+    password: '56ajkb67t6uyv%&%$#',
+    host: '82.180.144.162',
+    port: 5432,
+    dialect: 'postgres',
+    logging: (msg) => logger.db(msg) // Use our custom logger instead of console.log
+});
+
+
+const testConnection = async () => {
     try {
         await sequelize.authenticate();
-        console.log('Connection to the database has been established successfully.');
-        return true;
+        logger.success('Database connection established successfully');
     } catch (error) {
-        console.error('Unable to connect to the database:', error);
-        return false;
+        logger.error('Unable to connect to the database:', error);
     }
 };
+
+
+testConnection();
 
 export default sequelize;

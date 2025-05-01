@@ -1,11 +1,10 @@
 let db;
-
 export const openDB = () => {
   return new Promise((resolve, reject) => {
     if (db) {
       resolve(db);
     } else {
-      const request = indexedDB.open('offline-notes', 3);
+      const request = indexedDB.open('offline-notes', 4); // Increment version to trigger upgrade
 
       request.onupgradeneeded = (event) => {
         db = event.target.result;

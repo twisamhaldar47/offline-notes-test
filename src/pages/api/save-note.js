@@ -1,5 +1,5 @@
 import Note, { initializeModel } from '../../models/Note';
-import sequelize from '../../config/database';
+
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -20,7 +20,8 @@ export default async function handler(req, res) {
       const savedNote = await Note.create({
         localId: noteData.localId,
         title: noteData.title,
-        createdAt: new Date(noteData.createdAt)
+        createdAt: new Date(noteData.createdAt),
+        tags: noteData.tags || []
       });
       // const insertedId = noteData.localId; // Placeholder: Use localId as temporary example ID
 

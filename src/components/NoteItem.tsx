@@ -1,250 +1,140 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import SyncIndicator from './SyncIndicator'
-import { Note } from '../utils/notes'
-import { Button } from '../styles/styled';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { Note } from '@/utils/notes';
+import { Button } from '@/styles/styled';
 
-const NoteItemWrapper = styled.div`
-  margin-bottom: 1rem;
-`;
-
-const NoteFrame = styled.li<{ isSubmitted?: boolean }>`
-  position: relative;
+const NoteItemContainer = styled.li`
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
   padding: 1rem;
+  margin-bottom: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  margin-bottom: 0.25rem;
-  max-height: 150px;
-  overflow-y: auto;
-  width: 500px;
-  word-wrap: break-word;
-  overflow: visible;
-  background-color: ${props => (!props.isSubmitted ? '#eee' : 'transparent')};
-
-  .note-timestamp {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    margin: 0.5rem;
-    font-size: 0.8rem;
-    color: #888;
-  }
-
-  .edit-buttons {
-    position: absolute;
-    bottom: 0.5rem;
-    right: 0.5rem;
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .note-content {
-    width: 95%;
-    flex-grow: 1;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    overflow-y: auto;
-    max-width: 100%;
-    margin-bottom: 0.75rem;
-  }
-
-  textarea {
-    width: 100%;
-    border: none;
-    resize: none;
-    overflow: hidden;
-    font-size: 1rem;
-    line-height: 1;
-    padding: 0;
-    margin: 0;
-    height: auto;
-    min-height: 0rem;
-  }
+  background-color: #f9f9f9;
+  width: 100%;
 `;
 
-const Content = styled.div`
-  flex-grow: 1;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-  overflow-y: auto;
-  max-width: 100%;
-  margin-bottom: 1rem;
-  padding-bottom: 0.25rem;
-`;
-
-const SaveButton = styled(Button)`
-  padding: 5px 10px;
-  font-size: 0.8rem;
-`;
-
-const CancelButton = styled(Button)`
-  padding: 5px 10px;
-  font-size: 0.8rem;
-`;
-
-const DeleteButton = styled.button`
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: none;
-  border: none;
-  color: rgba(0, 0, 0, 0.4);
+const NoteTitle = styled.p`
+  margin: 0;
   font-size: 1rem;
-  cursor: pointer;
+  word-break: break-word;
 `;
 
-const EditButton = styled(Button)`
-  position: absolute;
-  padding: 5px 10px;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  font-size: 0.8rem;
-  cursor: pointer;
-`;
-
-const OfflineIndicatorWrapper = styled.div`
+const ButtonContainer = styled.div`
   display: flex;
-  flex-direction: column; /* Update to column */
-  align-items: flex-end; /* Align text elements to the right */
-  justify-content: flex-end; /* Align text elements to the bottom */
-  position: relative;
-  bottom: 0;
-  right: 0;
-  font-size: 0.75rem; /* Adjust the font size to make the icon smaller */
-  color: #fff;
+  margin-top: 1rem;
+  justify-content: flex-end;
 `;
 
-const OfflineIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 0.25rem; /* Add margin-bottom for spacing between pairs */
-`;
-
-const OfflineIndicatorIcon = styled(FontAwesomeIcon)`
-  color: red;
-  margin-right: 0.25rem;
-`;
-
-const OfflineIndicatorText = styled.span`
+const ActionButton = styled(Button)`
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
-  color: red;
+`;
+
+const EditForm = styled.div`
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+`;
+
+const EditInput = styled.textarea`
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  resize: vertical;
+`;
+
+const TagsInput = styled.input`
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+`;
+
+const TagsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+`;
+
+const Tag = styled.span`
+  background-color: #e0e0e0;
+  padding: 0.2rem 0.5rem;
+  margin: 0.2rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
 `;
 
 interface NoteItemProps {
-  note: Note,
-  onDeleteNote: (noteId: string) => Promise<void>;
-  onEditNote: (noteId: string, updatedTitle: string) => Promise<void>;
+  note: Note;
+  onDeleteNote: (id: string) => void;
+  onEditNote: (id: string, updatedTitle: string, updatedTags?: string[]) => void;
 }
 
 const NoteItem: React.FC<NoteItemProps> = ({ note, onDeleteNote, onEditNote }) => {
-  const [isSyncing, setSyncing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(note.title);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [updatedTitle, setUpdatedTitle] = useState(note.title);
+  const [updatedTagsString, setUpdatedTagsString] = useState(note.tags?.join(', ') || '');
 
-  const handleDelete = async () => {
-    // Set syncing state to true before making the request
-    setSyncing(true);
-
-    try {
-      // Make the delete request to the server
-      if (note.localId !== undefined) {
-        await onDeleteNote(note.localId);
-      }
-    } catch (error) {
-      console.error('Error deleting note:', error);
-    } finally {
-      // Set syncing state back to false after the request is complete
-      setSyncing(false);
-    }
-  };
-
-  const handleEdit = () => {
+  const handleEditClick = () => {
     setIsEditing(true);
-    setTitle(note.title);
+    setUpdatedTitle(note.title);
+    setUpdatedTagsString(note.tags?.join(', ') || '');
   };
 
-  const handleSave = async () => {
-    if (note.localId !== undefined) {
-      setSyncing(true);
-      await onEditNote(note.localId, title);
-      setSyncing(false);
-      setIsEditing(false);
+  const handleSaveClick = () => {
+    if (updatedTitle.trim() === '') {
+      return;
     }
-  };
 
-  const handleCancel = () => {
+    // Parse tags from the comma-separated string
+    const updatedTags = updatedTagsString
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag !== '');
+
+    onEditNote(note.localId!, updatedTitle, updatedTags);
     setIsEditing(false);
-    setTitle(note.title);
   };
 
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-      textareaRef.current.value = note.title;
-    }
-  }, [isEditing, title]);
+  const handleCancelClick = () => {
+    setIsEditing(false);
+  };
 
   return (
-    <NoteItemWrapper>
-      <NoteFrame isSubmitted={note._id !== undefined}>
-        {isSyncing && <SyncIndicator/>}
-        <DeleteButton onClick={handleDelete}>[x]</DeleteButton>
-        <p className="note-timestamp">{new Date(note.createdAt).toUTCString()}</p>
-        <div className="note-content">
-          {isEditing ? (
-            <textarea
-              ref={textareaRef}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              autoFocus
-            />
-          ) : (
-            <Content>{note.title}</Content>
-          )}
-        </div>
-        {isEditing ? (
-          <div className="edit-buttons">
-            <SaveButton onClick={handleSave}>Save</SaveButton>
-            <CancelButton onClick={handleCancel}>Cancel</CancelButton>
-          </div>
+      <NoteItemContainer>
+        {!isEditing ? (
+            <>
+              <NoteTitle>{note.title}</NoteTitle>
+              {note.tags && note.tags.length > 0 && (
+                  <TagsContainer>
+                    {note.tags.map((tag, index) => (
+                        <Tag key={index}>{tag}</Tag>
+                    ))}
+                  </TagsContainer>
+              )}
+              <ButtonContainer>
+                <ActionButton onClick={() => onDeleteNote(note.localId!)}>Delete</ActionButton>
+                <ActionButton onClick={handleEditClick}>Edit</ActionButton>
+              </ButtonContainer>
+            </>
         ) : (
-          <EditButton onClick={handleEdit}>Edit</EditButton>
+            <EditForm>
+              <EditInput
+                  value={updatedTitle}
+                  onChange={(e) => setUpdatedTitle(e.target.value)}
+                  rows={3}
+              />
+              <TagsInput
+                  value={updatedTagsString}
+                  onChange={(e) => setUpdatedTagsString(e.target.value)}
+                  placeholder="Tags (comma separated)"
+              />
+              <ButtonContainer>
+                <ActionButton onClick={handleCancelClick}>Cancel</ActionButton>
+                <ActionButton onClick={handleSaveClick}>Save</ActionButton>
+              </ButtonContainer>
+            </EditForm>
         )}
-      </NoteFrame>
-      {(note.localDeleteSynced === false || note.localEditSynced === false || note._id === undefined) && (
-        <OfflineIndicatorWrapper>
-          {note.localDeleteSynced === false && (
-            <OfflineIndicator>
-              <OfflineIndicatorIcon icon={faExclamationCircle} />
-              <OfflineIndicatorText>Note deletion not synced</OfflineIndicatorText>
-            </OfflineIndicator>
-          )}
-          {note.localEditSynced === false && (
-            <OfflineIndicator>
-              <OfflineIndicatorIcon icon={faExclamationCircle} />
-              <OfflineIndicatorText>Note edit not synced</OfflineIndicatorText>
-            </OfflineIndicator>
-          )}
-          {note._id === undefined && (
-            <OfflineIndicator>
-              <OfflineIndicatorIcon icon={faExclamationCircle} />
-              <OfflineIndicatorText>Note submission not synced</OfflineIndicatorText>
-            </OfflineIndicator>
-          )}
-        </OfflineIndicatorWrapper>
-      )}
-    </NoteItemWrapper>
+      </NoteItemContainer>
   );
 };
 

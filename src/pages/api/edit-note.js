@@ -1,11 +1,11 @@
-import Note from '../../models/Note';
+import Note, {initializeModel} from '../../models/Note';
 
 export default async function handler(req, res) {
 
   if (req.method === 'PUT') {
     try {
       const { id } = req.query; // ID of the note to edit (likely localId stored as _id by client)
-      const { title: noteTitle } = req.body; // New title
+      const { title: noteTitle,tags } = req.body;
 
       if (!id || typeof noteTitle !== 'string') {
         return res.status(400).json({ error: 'Missing note ID or title' });
@@ -17,6 +17,7 @@ export default async function handler(req, res) {
       // - Update the note's title to `noteTitle`.
       // - Handle the case where the note is not found.
       // - Replace the example response below.
+      await initializeModel();
       const note = await Note.findByPk(id);
 
       if (!note) {
@@ -25,6 +26,9 @@ export default async function handler(req, res) {
 
       // Update the note's title
       note.title = noteTitle;
+      if (tags !== undefined) {
+        note.tags = tags;
+      }
       await note.save();
       // const noteFound = true; // Placeholder
 
